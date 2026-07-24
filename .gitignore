@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.env
+.venv
+venv/
+
+# VSCode / IDE
+.vscode/
+.idea/
+
+# Data and models tracked by DVC
+data/
+models/
+
+# DVC cache (optional if you don't want to commit it)
+.dvc/cache/
