@@ -1,4 +1,4 @@
 [core]
     remote = churn-remote
 ['remote "churn-remote"']
-    url = s3://dvc-demo-telco-churn-bucket
+    url = s3://<YOUR_DVC_BUCKET>/dvc-demo
