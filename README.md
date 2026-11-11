@@ -1,103 +1,138 @@
-# DVC Demo: Telecom Customer Churn Prediction
+# DVC Demo — Telecom Customer Churn Dataset
 
-This repository demonstrates how to use **Git** and **DVC (Data Version Control)** together in a Machine Learning project.  
-The project uses a **Telecom Customer Churn dataset** to show how data versioning works in real-world ML workflows.
+This repository is the lightweight hands-on companion for the **DVC data-versioning material** in MLOps Zero to Hero.
 
-## Overview
+It demonstrates how Git and DVC work together:
 
-In Machine Learning projects, both **code** and **data** change over time.  
-Git is excellent for version-controlling source code, but it is not suitable for storing large datasets.  
-That is where DVC comes in.
+- Git versions the source code and small DVC pointer files.
+- DVC tracks the exact contents of the dataset.
+- An S3 remote stores the actual dataset objects outside Git.
 
-DVC helps us track dataset versions while storing the actual data in remote storage such as **AWS S3**.  
-Git stores the code and `.dvc` pointer files, while DVC manages the real dataset.
+> **Scope:** This is a DVC demonstration, not a model-training project. The `src/train.py` file is intentionally a placeholder and does not train a machine-learning model. The focus is on dataset tracking and reproducibility.
 
-## Why DVC?
-
-DVC solves common problems in ML projects such as:
-
-- Tracking multiple versions of the same dataset.
-- Reproducing experiments reliably.
-- Keeping large files out of Git.
-- Helping teams collaborate on shared data.
-- Restoring older dataset versions when needed.
-
-## How It Works
-
-1. The dataset is added using `dvc add`.
-2. DVC creates a small `.dvc` file containing metadata and a unique hash.
-3. The `.dvc` file is committed to Git.
-4. The actual dataset is uploaded to remote storage using `dvc push`.
-5. Other team members can clone the repo and use `dvc pull` to download the exact dataset version.
-
-## Project Workflow
-
-- **Git** stores:
-  - Python scripts
-  - configuration files
-  - notebooks
-  - `.dvc` metadata files
-
-- **DVC** stores:
-  - actual datasets
-  - dataset versions
-  - remote data pointers
-
-## Dataset
-
-This project uses a **Telecom Customer Churn** dataset.  
-The goal is to demonstrate how dataset versioning works in a machine learning workflow.
-
-## Example Commands
+## Clone the repository
 
 ```bash
-git init
-dvc init
-dvc add data/telco_churn.csv
-dvc remote add -d churn-remote s3://your-bucket-name
-dvc push
-git add .
-git commit -m "Track dataset with DVC"
+git clone https://github.com/Ghanathey-Neelesh-Kumar/dvc-demo.git
+cd dvc-demo
 ```
 
-To get the data on another machine:
+## Prerequisites
+
+- Git
+- Python 3.10+
+- DVC with S3 support
+- AWS CLI, if you are using Amazon S3
+
+Install DVC:
 
 ```bash
-git clone <repo-url>
-dvc pull
+python -m pip install "dvc[s3]"
 ```
 
-## Project Structure
+Verify:
 
 ```bash
+git --version
+dvc version
+aws --version
+```
+
+## Understand the repository
+
+```text
 dvc-demo/
-├── data/
-│   ├── telco_churn.csv
-│   └── telco_churn.csv.dvc
 ├── .dvc/
+│   └── config
+├── data/
+│   └── telco_churn.csv.dvc
+├── src/
+│   └── train.py
 ├── .dvcignore
 ├── .gitignore
 ├── requirements.txt
-├── src/
-│   └── train.py
 └── README.md
 ```
 
-## Learning Outcome
+The file `data/telco_churn.csv.dvc` is a small pointer file. It records the hash and path of the dataset; it is not the dataset itself.
 
-By the end of this project, you will understand:
+The actual data is stored in a DVC remote. GitHub does not contain the original CSV, and students should not assume they can access the instructor's AWS account.
 
-- Why Git alone is not enough for ML datasets.
-- How DVC helps version large data files.
-- How to store datasets in AWS S3.
-- How to reproduce the same dataset version across teams.
-- How Git and DVC work together in a practical ML project.
+## Configure your own DVC remote
 
-## Final Takeaway
+The repository is already initialised as a DVC project and contains a default remote named `churn-remote`. Do not run `dvc init` again.
 
-**Git stores the code and the pointers. DVC stores the actual data in S3.**  
-This makes ML projects more reproducible, collaborative, and easy to manage.
+Create an S3 bucket that you own, then update the existing remote:
 
-## Next Step
+```bash
+dvc remote modify churn-remote url s3://<YOUR_DVC_BUCKET>/dvc-demo
+dvc remote modify churn-remote region <AWS_REGION>
+```
 
-In the next section, we will implement this workflow practically and see DVC in action.
+DVC can use the AWS credentials configured through the AWS CLI. Verify the identity before accessing S3:
+
+```bash
+aws sts get-caller-identity
+```
+
+Do not place access keys in the repository. If you need a named AWS CLI profile, configure it locally rather than committing credentials.
+
+## Track a dataset
+
+Place a CSV dataset at:
+
+```text
+data/telco_churn.csv
+```
+
+If you are using your own dataset, make sure the file exists at that path. Then track it:
+
+```bash
+dvc add data/telco_churn.csv
+dvc status
+```
+
+DVC creates or updates:
+
+```text
+data/telco_churn.csv.dvc
+```
+
+This pointer contains metadata for the dataset version. Commit the pointer file to Git:
+
+```bash
+git add data/telco_churn.csv.dvc
+git commit -m "Track telecom churn dataset with DVC"
+```
+
+Push the actual dataset content to your configured remote:
+
+```bash
+dvc push
+```
+
+## Restore a dataset version
+
+On another machine, after cloning the repository and configuring access to the same DVC remote:
+
+```bash
+dvc pull
+```
+
+DVC downloads the dataset version identified by the pointer file.
+
+If you do not have access to the remote used to create the original pointer, use your own CSV and run `dvc add` and `dvc push` as shown above. The pointer in Git alone cannot download data that is not available in a remote you can access.
+
+## Try the placeholder script
+
+```bash
+python src/train.py
+```
+
+This only prints a message to represent where a training pipeline would run. It is not part of the DVC data-versioning workflow.
+
+## Key takeaway
+
+**Git versions the code and DVC pointer. DVC stores and restores the actual dataset.**
+
+For the combined DVC and MLflow experiment-tracking workflow, use the separate [MLflow and DVC Customer Churn Demo](https://github.com/Ghanathey-Neelesh-Kumar/mlflow-dvc-customer-churn-demo).
